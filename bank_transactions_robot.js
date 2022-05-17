@@ -1,28 +1,26 @@
-const schedule = require ('node-schedule');
-const scraper = require('./scraper')
-const registration = require('./registration')
-const formatter = require('./formatter')
+const { scheduleJob } = require ('node-schedule');
+const { register_transactions, register_balance } = require('./registration')
+const { format_entries } = require('./formatter')
+const { scrape } = require('./scraper')
 
-process.env.TZ = 'Asia/Tokyo';
+process.env.TZ = 'Asia/Tokyo'
+
+const scrape_and_register = () => {
+  scrape().then( ({balance, transactions}) => {
+
+    let formatted_transactions = format_entries(transactions)
+
+    console.log(`[Scraper] Scraped ${formatted_transactions.length} transactions, last one being ${formatted_transactions[0].description}`)
+    console.log(`[Scraper] Balance: ${balance}`)
+
+    register_transactions(formatted_transactions)
+    register_balance(balance)
+
+  })
+}
 
 // scrape periodically
-schedule.scheduleJob('0 2 * * *', () => {
-  scraper.scrape().then(result => {
-    let formatted_transactions = formatter.format_entries(result.transactions)
-    registration.register_transactions(formatted_transactions)
-    registration.register_balance(result.balance)
-  })
-});
+scheduleJob('0 2 * * *', scrape_and_register)
 
-console.log("Dry run for testing purposes")
-scraper.scrape().then(result => {
-
-  let formatted_transactions = formatter.format_entries(result.transactions)
-
-  console.log(`Scraped ${formatted_transactions.length} transactions, last one being ${formatted_transactions[0].description}`)
-  console.log(`Balance: ${result.balance}`)
-
-  registration.register_transactions(formatted_transactions)
-  registration.register_balance(result.balance)
-
-})
+// Scrape immediatly upon running script
+scrape_and_register()

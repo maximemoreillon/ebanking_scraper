@@ -1,37 +1,49 @@
 const axios = require('axios')
-const jwt = require('jsonwebtoken')
+const dotenv = require('dotenv')
+dotenv.config()
 
-const secrets = require('./secrets')
+const {
+  FINANCES_API_URL,
+  FINANCES_API_TOKEN,
+  FINANCES_API_ACCOUNT_NAME
+} = process.env
+
+const options = {
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${FINANCES_API_TOKEN}`,
+  },
+  timeout: 3000,
+}
 
 exports.register_transactions = (transactions) => {
-  axios.post(secrets.transactions_registration_api_url, {
-    transactions: transactions,
-  },{
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${secrets.jwt}`,
-    },
-    timeout: 3000,
+
+  const url = `${FINANCES_API_URL}/transactions`
+  // Note: Account is written in the transactions
+  const body = {transactions}
+
+  axios.post(url, body, options)
+  .then( () => {
+    console.log('[Transactions] Balance registered successfully')
   })
-  .then(response => console.log(response.data))
   .catch(error => {
     console.log(error)
   })
 }
 
 exports.register_balance = (balance) => {
-  axios.post(secrets.balance_registration_api_url, {
-    balance: balance,
+
+  const url = `${FINANCES_API_URL}/balance`
+  const body = {
+    balance,
     currency: "JPY",
-    account: secrets.account_name,
-  },{
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${secrets.jwt}`,
-    },
-    timeout: 3000,
+    account: FINANCES_API_ACCOUNT_NAME,
+  }
+
+  axios.post(url, body,options)
+  .then( () => {
+    console.log('[Balance] Balance registered successfully')
   })
-  .then(response => console.log(response.data))
   .catch(error => {
     console.log(error)
   })

@@ -1,7 +1,49 @@
-const puppeteer = require('puppeteer');
-const secrets = require('./secrets');
+const puppeteer = require('puppeteer')
+const dotenv = require('dotenv')
 
-exports.scrape = async function(){
+dotenv.config()
+
+const {
+  EBANKING_URL,
+  EBANKING_USERNAME,
+  EBANKING_PASSWORD,
+} = process.env
+
+
+const get_transactions_from_table = async (page) => page.evaluate(() => {
+  var transactions = []
+
+  // NOTE: returns a nodelist and not an array
+  var rows = document.querySelectorAll('#ctl00_cphBizConf_gdvCrdtwtdrwDtlInsp tr')
+  var balance = document.getElementById("ctl00_cphBizConf_lblBal")
+    .innerHTML
+    .replace(/,/g, "")
+    .replace(" 円", "")
+
+  rows.forEach(row => {
+
+    let cells = row.querySelectorAll("td")
+
+    var extracted_row = [];
+    
+    cells.forEach(cell => {
+      let content = cell.querySelector('span').innerHTML
+      extracted_row.push(content)
+    })
+
+    transactions.push(extracted_row)
+
+  })
+
+  return { balance, transactions }
+
+})
+
+exports.scrape = async () => {
+
+  console.log(`[Scraper] Scraper started`)
+
+
   // returns the content of the target trtansaction table
   const browser = await puppeteer.launch()
   const page = await browser.newPage()
@@ -9,77 +51,28 @@ exports.scrape = async function(){
   await page.setViewport({ width: 1280, height: 800 })
 
   // Navigate to main page
-  await page.goto(secrets.url);
-
-  await page.screenshot({path: './screenshots/initial.png'});
-
-  // Input ID
-  console.log(`[Scraper] Submitting ID`)
-  page.evaluate((secrets) => {
-    document.querySelector("input[name='ctl00$cphBizConf$txtLoginId']").value = secrets.username;
-    document.querySelector("input[name='ctl00$cphBizConf$btnNext']").click();
-  }, secrets);
-  await page.waitForNavigation();
-
-  await page.screenshot({path: './screenshots/username_input.png'});
-
-  // Login
-  console.log(`[Scraper] Submitting password`)
-  page.evaluate((secrets) => {
-    document.querySelector('input[name="ctl00$cphBizConf$txtLoginPw"]').value = secrets.password;
-    document.querySelector("input[name='ctl00$cphBizConf$btnLogin']").click();
-  }, secrets);
-  await page.waitForNavigation();
+  await page.goto(EBANKING_URL)
 
 
-  // Click "change password later" button
-  console.log(`[Scraper] Clicking 'Not changing password'`)
-  page.evaluate(() => {
-    document.querySelector("input[name='ctl00$cphBizConf$btnNoChg']").click();
-  })
-  .then( async () => {await page.waitForNavigation()} )
-  .catch( error => console.log(`[Scraper] failed to click 'not changing password'`))
+  // Input username and click next
+  await page.evaluate((EBANKING_USERNAME) => {
+    document.querySelector("input[name='ctl00$cphBizConf$txtLoginId']").value = EBANKING_USERNAME
+    document.querySelector("input[name='ctl00$cphBizConf$btnNext']").click()
+  }, EBANKING_USERNAME)
+  await page.waitForNavigation()
 
 
-
-  await page.screenshot({path: './screenshots/logged_in.png'});
-
-
-
-
-  var table_content = await page.evaluate(() => {
-    var table_content = [];
-
-    // Note: returns a nodelist and not an array
-    var rows = document.querySelectorAll('#ctl00_cphBizConf_gdvCrdtwtdrwDtlInsp tr')
-    var balance = document.getElementById("ctl00_cphBizConf_lblBal").innerHTML.replace(/,/g,"").replace(" 円","");
-
-    rows.forEach( row => {
-
-      let cells = row.querySelectorAll("td");
-
-      var extracted_row = [];
-      cells.forEach(cell => {
-        let content = cell.querySelector('span').innerHTML
-        extracted_row.push(content)
-      });
-
-      table_content.push(extracted_row)
+  // Input password and click next
+  await page.evaluate((EBANKING_PASSWORD) => {
+    document.querySelector('input[name="ctl00$cphBizConf$txtLoginPw"]').value = EBANKING_PASSWORD
+    document.querySelector("input[name='ctl00$cphBizConf$btnLogin']").click()
+  }, EBANKING_PASSWORD)
+  await page.waitForNavigation()
 
 
-    });
-
-
-
-
-   return {
-     balance: balance,
-     transactions: table_content
-   }
-   
-  });
+  const {balance, transactions} = await get_transactions_from_table(page)
 
   await browser.close();
 
-  return table_content
+  return { balance, transactions }
 }

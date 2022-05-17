@@ -1,10 +1,17 @@
-const secrets = require('./secrets')
+const dotenv = require('dotenv')
+dotenv.config()
 
-function format_value(value){
-  return Number(value.replace(/,/g,"").replace("円",""));
-}
 
-exports.format_entries = function(table){
+const {
+  FINANCES_API_ACCOUNT_NAME
+} = process.env
+
+
+const format_value = (value) => Number(value.replace(/,/g,"").replace("円",""));
+
+const  format_date = (value) => new Date( value.replace("年","/").replace("月","/").replace("日","") )
+
+exports.format_entries = (table) => {
 
   var entries = []
 
@@ -12,9 +19,9 @@ exports.format_entries = function(table){
     // Check format
     if(row.length === 5){
       var entry = {
-        date : new Date( row[0].replace("年","/").replace("月","/").replace("日","") ),
+        date : format_date(row[0]),
         description : row[4],
-        account: secrets.account_name,
+        account: FINANCES_API_ACCOUNT_NAME,
         currency: 'JPY',
       }
 
