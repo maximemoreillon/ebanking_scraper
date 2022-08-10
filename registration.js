@@ -33,11 +33,11 @@ exports.register_transactions = (transactions) => {
 
 exports.register_balance = (balance) => {
 
-  const url = `${FINANCES_API_URL}/balance`
+  const url = `${FINANCES_API_URL}/accounts/${FINANCES_API_ACCOUNT_NAME}/balance`
+  
   const body = {
     balance,
     currency: "JPY",
-    account: FINANCES_API_ACCOUNT_NAME,
   }
 
   axios.post(url, body,options)
