@@ -2,7 +2,7 @@
   "name": "bank_account_transactions_robot",
   "version": "1.0.0",
   "description": "",
-  "main": "bank_transactions_robot.js",
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
