@@ -6,7 +6,10 @@ const {
   finance_api_account,
 } = require('./registration')
 const { format_entries } = require('./formatter')
-const { scrape } = require('./scraper')
+const { 
+  scrape,
+  ebanking_url
+} = require('./scraper')
 const { version } = require('./package.json')
 const express = require('express')
 const cors = require('cors')
@@ -31,6 +34,9 @@ app.get('/', (req, res) => {
     finances_api: {
       url: finance_api_url,
       account: finance_api_account,
+    },
+    ebaking: {
+      url: ebanking_url
     }
   })
 })

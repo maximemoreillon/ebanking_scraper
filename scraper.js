@@ -92,3 +92,5 @@ exports.scrape = async () => {
 
   return { balance, transactions }
 }
+
+exports.ebanking_url = EBANKING_URL
