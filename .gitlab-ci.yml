@@ -6,7 +6,8 @@ variables:
   APPLICATION_NAME: ebanking-scraper
   CONTAINER_IMAGE: ${DOCKER_HUB_USERNAME}/${APPLICATION_NAME}
   CONTAINER_IMAGE_TAGGED: ${DOCKER_HUB_USERNAME}/${APPLICATION_NAME}:${CI_COMMIT_SHORT_SHA}
-
+  K8S_NODEPORT_PORT: 30223
+  
 image: moreillon/ci-dind
 services:
   - name: docker:19.03.12-dind

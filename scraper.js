@@ -13,6 +13,8 @@ const {
 const get_transactions_from_table = async (page) => page.evaluate(() => {
   var transactions = []
 
+  
+
   // NOTE: returns a nodelist and not an array
   var rows = document.querySelectorAll('#ctl00_cphBizConf_gdvCrdtwtdrwDtlInsp tr')
   var balance = document.getElementById("ctl00_cphBizConf_lblBal")
@@ -45,10 +47,21 @@ exports.scrape = async () => {
 
 
   // returns the content of the target trtansaction table
-  const browser = await puppeteer.launch({
-    executablePath: '/usr/bin/google-chrome',
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
-  });
+
+  let browser
+
+  try {
+    browser = await puppeteer.launch({
+      executablePath: '/usr/bin/google-chrome',
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    })
+  }
+  catch {
+    browser = await puppeteer.launch()
+  }
+  
+
+
   const page = await browser.newPage()
 
   await page.setViewport({ width: 1280, height: 800 })
@@ -71,6 +84,11 @@ exports.scrape = async () => {
     document.querySelector("input[name='ctl00$cphBizConf$btnLogin']").click()
   }, EBANKING_PASSWORD)
   await page.waitForNavigation()
+
+  await page.screenshot({
+    path: "./screenshots/screenshot.png",
+    fullPage: true
+  });
 
 
   const {balance, transactions} = await get_transactions_from_table(page)
