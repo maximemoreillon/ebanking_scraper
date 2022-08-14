@@ -85,11 +85,6 @@ exports.scrape = async () => {
   }, EBANKING_PASSWORD)
   await page.waitForNavigation()
 
-  await page.screenshot({
-    path: "./screenshots/screenshot.png",
-    fullPage: true
-  });
-
 
   const {balance, transactions} = await get_transactions_from_table(page)
 
