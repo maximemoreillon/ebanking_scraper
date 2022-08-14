@@ -15,6 +15,7 @@ const express = require('express')
 const cors = require('cors')
 const dotenv = require('dotenv')
 
+let success
 
 dotenv.config()
 
@@ -37,7 +38,8 @@ app.get('/', (req, res) => {
     },
     ebaking: {
       url: ebanking_url
-    }
+    },
+    success,
   })
 })
 
@@ -49,10 +51,12 @@ app.listen(PORT, () => {
 
 process.env.TZ = 'Asia/Tokyo'
 
-const scrape_and_register = () => {
-  scrape().then( ({balance, transactions}) => {
 
-    let formatted_transactions = format_entries(transactions)
+const scrape_and_register = async () => {
+  try {
+    const { balance, transactions } = await scrape()
+
+    const formatted_transactions = format_entries(transactions)
 
     console.log(`[Scraper] Scraped ${formatted_transactions.length} transactions, last one being ${formatted_transactions[0].description}`)
     console.log(`[Scraper] Balance: ${balance}`)
@@ -60,7 +64,13 @@ const scrape_and_register = () => {
     register_transactions(formatted_transactions)
     register_balance(balance)
 
-  })
+    success = true
+  } catch (error) {
+    console.error(error)
+    success = false
+  }
+  
+
 }
 
 // scrape periodically
