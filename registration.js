@@ -18,13 +18,13 @@ const options = {
 
 exports.register_transactions = (transactions) => {
 
-  const url = `${FINANCES_API_URL}/transactions`
+  const url = `${FINANCES_API_URL}/accounts/${FINANCES_API_ACCOUNT_NAME}/transactions`
   // Note: Account is written in the transactions
   const body = {transactions}
 
   axios.post(url, body, options)
   .then( () => {
-    console.log('[Transactions] Balance registered successfully')
+    console.log('[Transactions] transactions registered successfully')
   })
   .catch(error => {
     console.log(error)
