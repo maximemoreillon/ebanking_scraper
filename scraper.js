@@ -70,6 +70,7 @@ exports.scrape = async () => {
   await page.goto(EBANKING_URL)
 
 
+
   // Input username and click next
   await page.evaluate((EBANKING_USERNAME) => {
     document.querySelector("input[name='ctl00$cphBizConf$txtLoginId']").value = EBANKING_USERNAME
@@ -84,6 +85,8 @@ exports.scrape = async () => {
     document.querySelector("input[name='ctl00$cphBizConf$btnLogin']").click()
   }, EBANKING_PASSWORD)
   await page.waitForNavigation()
+  
+  await page.screenshot({ path: './screenshots/screenshot.jpg' });
 
 
   const {balance, transactions} = await get_transactions_from_table(page)
