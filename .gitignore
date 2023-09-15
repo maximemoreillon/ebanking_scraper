@@ -1,6 +1,6 @@
 screenshots/
-screenshot.jpg
-screenshot.png
+*.jpg
+*.png
 node_modules/
 secrets.js
 .env

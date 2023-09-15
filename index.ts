@@ -1,8 +1,8 @@
-const { format_entries } = require("./formatter")
-const { scrape } = require("./scraper")
-const { version } = require("./package.json")
-const dotenv = require("dotenv")
-const { register_transactions, register_balance } = require("./registration")
+import { format_entries } from "./formatter"
+import { scrape } from "./scraper"
+import { version } from "./package.json"
+import dotenv from "dotenv"
+import { register_transactions, register_balance } from "./registration"
 
 dotenv.config()
 
@@ -11,7 +11,8 @@ process.env.TZ = "Asia/Tokyo"
 console.log(`E-Banking scraper v${version}`)
 
 const scrape_and_register = async () => {
-  const { balance, transactions } = await scrape()
+  const { balance, transactions }: any = await scrape()
+
   const formatted_transactions = format_entries(transactions)
 
   console.log(
