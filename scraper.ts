@@ -1,5 +1,4 @@
 import puppeteer, { Page, Browser } from "puppeteer"
-import { sleep } from "./utils"
 import dotenv from "dotenv"
 
 dotenv.config()
@@ -10,6 +9,18 @@ const {
   EBANKING_PASSWORD = "",
 } = process.env
 
+const scrapeBalance = async (page: Page) => {
+  const balanceContainer: any = await page.$("#ctl00_cphBizConf_lblBal")
+  const balanceString: string = await (
+    await balanceContainer.getProperty("textContent")
+  ).jsonValue()
+  const balanceStringFormatted = balanceString
+    .replace(/,/g, "")
+    .replace(" 円", "")
+
+  return Number(balanceStringFormatted)
+}
+
 const get_transactions_from_table = async (page: Page) =>
   page.evaluate(() => {
     var transactions: any[] = []
@@ -18,12 +29,6 @@ const get_transactions_from_table = async (page: Page) =>
     var rows = document.querySelectorAll(
       "#ctl00_cphBizConf_gdvCrdtwtdrwDtlInsp tr"
     )
-
-    // @ts-ignore
-    var balance = document
-      .getElementById("ctl00_cphBizConf_lblBal")
-      .innerHTML.replace(/,/g, "")
-      .replace(" 円", "")
 
     rows.forEach((row) => {
       let cells = row.querySelectorAll("td")
@@ -39,7 +44,7 @@ const get_transactions_from_table = async (page: Page) =>
       transactions.push(extracted_row)
     })
 
-    return { balance, transactions }
+    return transactions
   })
 
 export const scrape = async () => {
@@ -69,9 +74,7 @@ export const scrape = async () => {
 
   try {
     await page.waitForNavigation()
-  } catch (error) {
-    console.warn("Waiting for navigation failed")
-  }
+  } catch (error) {}
 
   await page.click("#chkUseSoftwareKeyBoard")
   await page.type("#ctl00_cphBizConf_txtLoginPw", EBANKING_PASSWORD)
@@ -79,13 +82,12 @@ export const scrape = async () => {
 
   try {
     await page.waitForNavigation()
-  } catch (error) {
-    console.warn("Waiting for navigation failed")
-  }
+  } catch (error) {}
 
   console.log("[Scraper] Logged in")
 
-  const { balance, transactions } = await get_transactions_from_table(page)
+  const balance = await scrapeBalance(page)
+  const transactions = await get_transactions_from_table(page)
 
   await browser.close()
 
