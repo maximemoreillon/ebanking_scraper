@@ -18,14 +18,7 @@ export const register_transactions = (transactions: any) => {
   // Note: Account is written in the transactions
   const body = { transactions }
 
-  axios
-    .post(url, body, options)
-    .then(() => {
-      console.log("[Transactions] transactions registered successfully")
-    })
-    .catch((error: any) => {
-      console.log(error)
-    })
+  return axios.post(url, body, options)
 }
 
 export const register_balance = (balance: number) => {
@@ -36,14 +29,7 @@ export const register_balance = (balance: number) => {
     currency: "JPY",
   }
 
-  axios
-    .post(url, body, options)
-    .then(() => {
-      console.log("[Balance] Balance registered successfully")
-    })
-    .catch((error: any) => {
-      console.log(error)
-    })
+  return axios.post(url, body, options)
 }
 
 export const finance_api_url = FINANCES_API_URL
