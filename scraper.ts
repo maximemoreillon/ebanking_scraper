@@ -80,6 +80,8 @@ export const scrape = async () => {
   await page.type("#ctl00_cphBizConf_txtLoginPw", EBANKING_PASSWORD)
   await page.click("#ctl00_cphBizConf_btnLogin")
 
+  console.log("[Scraper] Waiting for login...")
+
   try {
     await page.waitForNavigation()
   } catch (error) {}
