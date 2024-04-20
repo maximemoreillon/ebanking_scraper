@@ -1,5 +1,6 @@
 import puppeteer, { Page, Browser } from "puppeteer"
 import dotenv from "dotenv"
+import { format_date, format_value } from "./formatter"
 
 dotenv.config()
 
@@ -7,6 +8,7 @@ const {
   EBANKING_URL = "",
   EBANKING_USERNAME = "",
   EBANKING_PASSWORD = "",
+  FINANCES_API_ACCOUNT_NAME,
 } = process.env
 
 const scrapeBalance = async (page: Page) => {
@@ -22,30 +24,21 @@ const scrapeBalance = async (page: Page) => {
 }
 
 const get_transactions_from_table = async (page: Page) =>
-  page.evaluate(() => {
-    var transactions: any[] = []
+  await page.$$eval("#ctl00_cphBizConf_gdvAcntInfo tr", (rows) =>
+    rows
+      .map((row) => {
+        const [date, expense, income, balance, description] = Array.from(
+          row.querySelectorAll("td")
+        ).reduce((acc: any, cell) => {
+          const textContent = cell.textContent
+          return [...acc, textContent?.trim()]
+        }, [])
 
-    // NOTE: returns a nodelist and not an array
-    var rows = document.querySelectorAll(
-      "#ctl00_cphBizConf_gdvCrdtwtdrwDtlInsp tr"
-    )
-
-    rows.forEach((row) => {
-      let cells = row.querySelectorAll("td")
-
-      var extracted_row: any[] = []
-
-      cells.forEach((cell) => {
-        // @ts-ignore
-        let content = cell.querySelector("span").innerHTML
-        extracted_row.push(content)
+        const transaction = { date, expense, income, balance, description }
+        return transaction
       })
-
-      transactions.push(extracted_row)
-    })
-
-    return transactions
-  })
+      .filter((transaction) => transaction.date)
+  )
 
 export const scrape = async () => {
   console.log(`[Scraper] Scraper started`)
@@ -88,10 +81,30 @@ export const scrape = async () => {
 
   console.log("[Scraper] Logged in")
 
+  console.log("[Scraper] Scraping balance...")
   const balance = await scrapeBalance(page)
+
+  console.log(`[Scraper] Scraped balance : ${balance}`)
+
+  await page.click("#ctl00_cphBizConf_lnkSeeBfrCrdt")
+  try {
+    await page.waitForNavigation()
+  } catch (error) {}
+
   const transactions = await get_transactions_from_table(page)
 
   await browser.close()
 
-  return { balance, transactions }
+  return {
+    balance,
+    transactions: transactions.map(({ date, expense, income, description }) => {
+      return {
+        date: format_date(date),
+        account: FINANCES_API_ACCOUNT_NAME,
+        currency: "JPY",
+        description,
+        amount: income ? format_value(income) : -format_value(expense),
+      }
+    }),
+  }
 }
