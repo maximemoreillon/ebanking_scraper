@@ -1,14 +1,14 @@
 import dotenv from "dotenv"
 dotenv.config()
 
-import { scrape } from "./scraper"
 import { version } from "./package.json"
+console.log(`E-Banking scraper v${version}`)
+
+import { scrape } from "./scraper"
 import { register_transactions, register_balance } from "./registration"
 import { logger } from "./logger"
 
 process.env.TZ = "Asia/Tokyo"
-
-console.log(`E-Banking scraper v${version}`)
 
 const scrape_and_register = async () => {
   try {
