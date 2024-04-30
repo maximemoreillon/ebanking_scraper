@@ -75,7 +75,16 @@ export const scrape = async () => {
   await page.type("#ctl00_cphBizConf_txtLoginPw", EBANKING_PASSWORD)
   await page.click("#ctl00_cphBizConf_btnLogin")
 
-  await page.waitForSelector('input[name="ctl00$mmngMenu$ctl01"]')
+  try {
+    await page.waitForSelector('input[name="ctl00$mmngMenu$ctl01"]', {
+      timeout: 3000,
+    })
+  } catch (error) {
+    console.log("Login error, checking if asked to skip password update")
+
+    await page.click("#ctl00_cphBizConf_btnNoStsIssue")
+    await page.waitForSelector('input[name="ctl00$mmngMenu$ctl01"]')
+  }
 
   console.log("[Scraper] Logged in")
   console.log("[Scraper] Navigating to transactions table page...")
