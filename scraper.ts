@@ -13,31 +13,47 @@ const {
 
 const parseTransactionsPage = async (page: Page) => {
   const transactions = await page.$$eval(
-    "#ctl00_cphBizConf_gdvAcntInfo tr",
+    ".account-activity-table__body__tr",
     (rows) =>
       rows.map((row) => {
-        const [date, expense, income, balance, description] = Array.from(
-          row.querySelectorAll("td")
-        ).reduce((acc: any, cell) => [...acc, cell.textContent?.trim()], [])
+        const date = row.querySelector(
+          ".account-activity-table__td--date"
+        )?.textContent
+        const description = row.querySelector(
+          ".account-activity-table__td--name"
+        )?.textContent
+        const amount = row.querySelector(
+          ".account-activity-table__td--activity"
+        )?.textContent
+        const balance = row.querySelector(
+          ".account-activity-table__td--balance"
+        )?.textContent
 
-        return { date, expense, income, balance, description }
+        if (!date) throw "Missing date"
+        if (!amount) throw "Missing amount"
+
+        return {
+          date,
+          amount,
+          balance,
+          description,
+        }
       })
   )
 
   const balanceString = transactions.at(-1)?.balance
-
   if (!balanceString) throw "Balance undefined"
 
   return {
     balance: format_value(balanceString),
     transactions: transactions
       .filter((transaction) => transaction.date)
-      .map(({ date, expense, income, description }) => ({
+      .map(({ date, amount, description }) => ({
         date: format_date(date),
         account: FINANCES_API_ACCOUNT_NAME,
         currency: "JPY",
         description,
-        amount: income ? format_value(income) : -format_value(expense),
+        amount: format_value(amount),
       })),
   }
 }
@@ -64,35 +80,31 @@ export const scrape = async () => {
 
   console.log("[Scraper] Logging in...")
 
-  // clicking "ソフトウェアキーボードを使用して入力する" is needed for input
-  await page.click("#chkUseSoftwareKeyBoard")
-  await page.type("#ctl00_cphBizConf_txtLoginId", EBANKING_USERNAME)
-  await page.click("#ctl00_cphBizConf_btnNext")
+  await page.type("#loginId", EBANKING_USERNAME)
+  await page.keyboard.press("Enter")
+  await page.waitForSelector("#loginPassword")
+  await page.type("#loginPassword", EBANKING_PASSWORD)
+  await page.keyboard.press("Enter")
 
-  await page.waitForSelector("#chkUseSoftwareKeyBoard")
+  await page.waitForSelector(
+    ".global-navigation__inner__item__second-menu__item__link"
+  )
 
-  await page.click("#chkUseSoftwareKeyBoard")
-  await page.type("#ctl00_cphBizConf_txtLoginPw", EBANKING_PASSWORD)
-  await page.click("#ctl00_cphBizConf_btnLogin")
-
-  try {
-    await page.waitForSelector('input[name="ctl00$mmngMenu$ctl01"]', {
-      timeout: 3000,
-    })
-  } catch (error) {
-    console.log("Login error, checking if asked to skip password update")
-
-    await page.click("#ctl00_cphBizConf_btnNoStsIssue")
-    await page.waitForSelector('input[name="ctl00$mmngMenu$ctl01"]')
-  }
+  // TODO: ignore password change
 
   console.log("[Scraper] Logged in")
   console.log("[Scraper] Navigating to transactions table page...")
 
-  await page.click('input[name="ctl00$mmngMenu$ctl01"]')
-  await page.waitForSelector("#ctl00_cphBizConf_btnRefthisMon")
-  await page.click("#ctl00_cphBizConf_btnRefthisMon")
-  await page.waitForSelector("#ctl00_cphBizConf_gdvAcntInfo")
+  const menu = await page.$(".home-menu__list")
+  const menuItems = await menu?.$$("li")
+  if (!menuItems) throw "Home page menu items not found"
+  const link = await menuItems[0].$("a")
+  if (!link) throw "Link to transactions table not found"
+  link.click()
+
+  await page.waitForNavigation({ timeout: 5000 })
+
+  await page.screenshot({ path: "./screenshot.jpg" })
 
   console.log("[Scraper] Navigated to transactions table page")
 
