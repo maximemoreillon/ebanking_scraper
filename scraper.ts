@@ -61,12 +61,10 @@ const parseTransactionsPage = async (page: Page) => {
 export const scrape = async () => {
   console.log(`[Scraper] Scraper started`)
 
-  // returns the content of the target transaction table
   let browser: Browser
 
   try {
     browser = await puppeteer.launch({
-      // headless: "new",
       executablePath: "/usr/bin/google-chrome",
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     })
@@ -103,8 +101,6 @@ export const scrape = async () => {
   link.click()
 
   await page.waitForNavigation({ timeout: 5000 })
-
-  await page.screenshot({ path: "./screenshot.jpg" })
 
   console.log("[Scraper] Navigated to transactions table page")
 
