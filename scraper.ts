@@ -76,6 +76,8 @@ export const scrape = async () => {
   await page.setViewport({ width: 1280, height: 800 })
   await page.goto(EBANKING_URL)
 
+  await page.waitForSelector("#loginId", { timeout: 5000 })
+
   console.log("[Scraper] Logging in...")
 
   await page.type("#loginId", EBANKING_USERNAME)
@@ -84,9 +86,15 @@ export const scrape = async () => {
   await page.type("#loginPassword", EBANKING_PASSWORD)
   await page.keyboard.press("Enter")
 
-  await page.waitForSelector(
-    ".global-navigation__inner__item__second-menu__item__link"
-  )
+  try {
+    await page.waitForSelector(
+      ".global-navigation__inner__item__second-menu__item__link",
+      { timeout: 5000 }
+    )
+  } catch (error) {
+    await page.screenshot({ path: "./screenshot.png" })
+    throw error
+  }
 
   // TODO: ignore password change
 
