@@ -3,7 +3,7 @@ kind: CronJob
 metadata:
   name: ${APPLICATION_NAME}
 spec:
-  schedule: "30 12 * * *"
+  schedule: "45 12 * * *"
   jobTemplate:
     spec:
       template:
@@ -18,7 +18,7 @@ spec:
                 - name: FINANCES_API_TOKEN
                   valueFrom:
                     secretKeyRef:
-                      name: oicd-token
+                      name: oidc-token
                       key: OIDC_M2M_ACCESS_TOKEN
               envFrom:
                 - secretRef:
