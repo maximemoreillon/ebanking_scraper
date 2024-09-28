@@ -3,7 +3,7 @@ kind: CronJob
 metadata:
   name: ${APPLICATION_NAME}
 spec:
-  schedule: "30 8 * * *"
+  schedule: "30 12 * * *"
   jobTemplate:
     spec:
       template:
@@ -15,6 +15,11 @@ spec:
               env:
                 - name: LOKI_URL
                   value: http://loki.monitoring:3100
+                # - name: FINANCES_API_TOKEN
+                #   valueFrom:
+                #     secretKeyRef:
+                #       name: oicd-token
+                #       key: OIDC_M2M_ACCESS_TOKEN
               envFrom:
                 - secretRef:
                     name: resona-scraper
