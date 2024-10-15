@@ -12,9 +12,9 @@ services:
   - name: docker:24-dind
 
 build:
+  stage: build
   only:
     - master
-  stage: build
   tags:
     - dind
   before_script:
@@ -26,9 +26,9 @@ build:
     - docker push ${CONTAINER_IMAGE_TAGGED}
 
 deploy:
+  stage: deploy
   only:
     - master
-  stage: deploy
   tags:
     - dind
   before_script:
