@@ -1,11 +1,8 @@
 import puppeteer, { Page, Browser } from "puppeteer";
-import dotenv from "dotenv";
 import { format_date, format_value } from "./formatter";
 
-dotenv.config();
-
 const {
-  EBANKING_URL = "",
+  EBANKING_URL = "https://ib.resonabank.co.jp/web/0102/0102_010_00",
   EBANKING_USERNAME = "",
   EBANKING_PASSWORD = "",
   FINANCES_API_ACCOUNT_NAME,
@@ -17,16 +14,16 @@ const parseTransactionsPage = async (page: Page) => {
     (rows) =>
       rows.map((row) => {
         const date = row.querySelector(
-          ".account-activity-table__td--date"
+          ".account-activity-table__td--date",
         )?.textContent;
         const description = row.querySelector(
-          ".account-activity-table__td--name"
+          ".account-activity-table__td--name",
         )?.textContent;
         const amount = row.querySelector(
-          ".account-activity-table__td--activity"
+          ".account-activity-table__td--activity",
         )?.textContent;
         const balance = row.querySelector(
-          ".account-activity-table__td--balance"
+          ".account-activity-table__td--balance",
         )?.textContent;
 
         if (!date) throw "Missing date";
@@ -38,7 +35,7 @@ const parseTransactionsPage = async (page: Page) => {
           balance,
           description,
         };
-      })
+      }),
   );
 
   const balanceString = transactions.at(-1)?.balance;
@@ -92,7 +89,7 @@ export const scrape = async () => {
   try {
     await page.waitForSelector(
       ".global-navigation__inner__item__second-menu__item__link",
-      { timeout: 5000 }
+      { timeout: 5000 },
     );
   } catch (error) {
     await page.screenshot({ path: "./screenshot.png" });
