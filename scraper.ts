@@ -1,5 +1,5 @@
-import puppeteer, { Page, Browser } from "puppeteer";
-import { format_date, format_value } from "./formatter";
+import puppeteer, { Page } from "puppeteer";
+import { format_date, format_value, renameDuplicates } from "./formatter";
 
 const {
   EBANKING_URL = "https://ib.resonabank.co.jp/web/0102/0102_010_00",
@@ -38,45 +38,42 @@ const parseTransactionsPage = async (page: Page) => {
       }),
   );
 
+  // The balance is only shown per transaction, so it is unknown when the table is empty
   const balanceString = transactions.at(-1)?.balance;
-  if (!balanceString) throw "Balance undefined";
 
   return {
-    balance: format_value(balanceString),
-    transactions: transactions
-      .filter((transaction) => transaction.date)
-      .map(({ date, amount, description }) => ({
-        date: format_date(date),
-        account: FINANCES_API_ACCOUNT_NAME,
-        currency: "JPY",
-        description,
-        amount: format_value(amount),
-      })),
+    balance: balanceString ? format_value(balanceString) : undefined,
+    transactions: renameDuplicates(
+      transactions
+        .filter((transaction) => transaction.date)
+        .map(({ date, amount, description }) => ({
+          date: format_date(date),
+          account: FINANCES_API_ACCOUNT_NAME,
+          currency: "JPY",
+          description,
+          amount: format_value(amount),
+        })),
+    ),
   };
 };
 
 export const scrape = async () => {
   console.log(`[Scraper] Scraper started`);
 
-  let browser: Browser;
   const ua =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36";
 
-  try {
-    browser = await puppeteer.launch({
-      executablePath: "/usr/bin/google-chrome",
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    });
-  } catch {
-    browser = await puppeteer.launch();
-  }
+  // The container runs as root, which Chrome only allows without its sandbox
+  const browser = await puppeteer.launch({
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  });
 
   const page = await browser.newPage();
   await page.setUserAgent(ua);
   await page.setViewport({ width: 1280, height: 800 });
   await page.goto(EBANKING_URL);
 
-  await page.waitForSelector("#loginId", { timeout: 5000 });
+  await page.waitForSelector("#loginId");
 
   console.log("[Scraper] Logging in...");
 
@@ -86,15 +83,9 @@ export const scrape = async () => {
   await page.type("#loginPassword", EBANKING_PASSWORD);
   await page.keyboard.press("Enter");
 
-  try {
-    await page.waitForSelector(
-      ".global-navigation__inner__item__second-menu__item__link",
-      { timeout: 5000 },
-    );
-  } catch (error) {
-    await page.screenshot({ path: "./screenshot.png" });
-    throw error;
-  }
+  await page.waitForSelector(
+    ".global-navigation__inner__item__second-menu__item__link",
+  );
 
   // TODO: ignore password change
 
@@ -106,9 +97,8 @@ export const scrape = async () => {
   if (!menuItems) throw "Home page menu items not found";
   const link = await menuItems[0].$("a");
   if (!link) throw "Link to transactions table not found";
-  link.click();
-
-  await page.waitForNavigation({ timeout: 5000 });
+  // Wait for navigation concurrently with the click so a fast page load is not missed
+  await Promise.all([page.waitForNavigation(), link.click()]);
 
   console.log("[Scraper] Navigated to transactions table page");
 

@@ -1,9 +1,9 @@
-FROM ghcr.io/puppeteer/puppeteer:16.1.0
+# Keep in sync with the puppeteer version in package-lock.json
+FROM ghcr.io/puppeteer/puppeteer:23.5.3
 USER root
 
 WORKDIR /usr/src/app
+COPY package.json package-lock.json ./
+RUN npm ci
 COPY . .
-RUN npm install
 CMD [ "npm", "run", "start"]
-
-
