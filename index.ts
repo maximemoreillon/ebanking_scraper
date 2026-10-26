@@ -6,7 +6,6 @@ console.log(`E-Banking scraper v${version}`)
 
 import { scrape } from "./scraper"
 import { register_transactions, register_balance } from "./registration"
-import { logger } from "./logger"
 
 process.env.TZ = "Asia/Tokyo"
 
@@ -20,16 +19,10 @@ const scrape_and_register = async () => {
     await register_transactions(transactions)
     await register_balance(balance)
 
-    logger.info({
-      message: `Successfully registered balance and ${transactions.length} transactions`,
-    })
+    console.log(`Successfully registered balance and ${transactions.length} transactions`)
   } catch (error) {
-    logger.error({
-      message: `Scraping failed`,
-    })
+    console.error(`Scraping failed`)
     throw error
-  } finally {
-    logger.close()
   }
 }
 

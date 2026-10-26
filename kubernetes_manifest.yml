@@ -17,8 +17,6 @@ spec:
                   value: http://finances
                 - name: FINANCES_API_ACCOUNT_ID
                   value: "1"
-                - name: LOKI_URL
-                  value: http://loki.monitoring:3100
               envFrom:
                 - secretRef:
                     name: resona-scraper-env-from-vault
