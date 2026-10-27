@@ -1,5 +1,5 @@
 # Keep in sync with the puppeteer version in package-lock.json
-FROM ghcr.io/puppeteer/puppeteer:23.5.3
+FROM ghcr.io/puppeteer/puppeteer:25.16.0
 USER root
 
 WORKDIR /usr/src/app
