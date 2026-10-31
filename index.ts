@@ -2,7 +2,8 @@ import dotenv from "dotenv"
 dotenv.config()
 
 import { version } from "./package.json"
-console.log(`E-Banking scraper v${version}`)
+import { logger } from "./logger"
+logger.info(`E-Banking scraper v${version}`)
 
 import { scrape } from "./scraper"
 import { register_transactions, register_balance } from "./registration"
@@ -12,18 +13,23 @@ process.env.TZ = "Asia/Tokyo"
 const scrape_and_register = async () => {
   const { balance, transactions } = await scrape()
 
-  console.log(`[Scraper] Scraped ${transactions.length} transactions`)
-  console.log(`[Scraper] Balance: ${balance}`)
+  logger.info(
+    { count: transactions.length, balance },
+    "[Scraper] Transactions scraped",
+  )
 
   await register_transactions(transactions)
 
   if (balance === undefined) {
-    console.log(`[Scraper] No transactions listed, balance not registered`)
+    logger.warn("[Scraper] No transactions listed, balance not registered")
   } else {
     await register_balance(balance)
   }
 
-  console.log(`Successfully registered ${transactions.length} transactions`)
+  logger.info({ count: transactions.length }, "Transactions registered")
 }
 
-scrape_and_register()
+scrape_and_register().catch((error) => {
+  logger.error({ err: error }, "Scrape and register failed")
+  process.exit(1)
+})

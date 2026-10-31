@@ -1,5 +1,6 @@
 import puppeteer, { Page } from "puppeteer";
 import { format_date, format_value, renameDuplicates } from "./formatter";
+import { logger } from "./logger";
 
 const {
   EBANKING_URL = "https://ib.resonabank.co.jp/web/0102/0102_010_00",
@@ -58,7 +59,7 @@ const parseTransactionsPage = async (page: Page) => {
 };
 
 export const scrape = async () => {
-  console.log(`[Scraper] Scraper started`);
+  logger.info(`[Scraper] Scraper started`);
 
   const ua =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36";
@@ -75,7 +76,7 @@ export const scrape = async () => {
 
   await page.waitForSelector("#loginId");
 
-  console.log("[Scraper] Logging in...");
+  logger.info("[Scraper] Logging in...");
 
   await page.type("#loginId", EBANKING_USERNAME);
   await page.keyboard.press("Enter");
@@ -89,8 +90,8 @@ export const scrape = async () => {
 
   // TODO: ignore password change
 
-  console.log("[Scraper] Logged in");
-  console.log("[Scraper] Navigating to transactions table page...");
+  logger.info("[Scraper] Logged in");
+  logger.info("[Scraper] Navigating to transactions table page...");
 
   const menu = await page.$(".home-menu__list");
   const menuItems = await menu?.$$("li");
@@ -100,7 +101,7 @@ export const scrape = async () => {
   // Wait for navigation concurrently with the click so a fast page load is not missed
   await Promise.all([page.waitForNavigation(), link.click()]);
 
-  console.log("[Scraper] Navigated to transactions table page");
+  logger.info("[Scraper] Navigated to transactions table page");
 
   const { balance, transactions } = await parseTransactionsPage(page);
 
